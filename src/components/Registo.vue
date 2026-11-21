@@ -1,6 +1,8 @@
 <script setup>
 import { computed, onUnmounted, ref } from 'vue'
 
+defineProps({ links: { type: Object, required: true } })
+
 const stations = [
   { id: 'buzi', district: 'Búzi', station: 'Posto Estúrio', basin: 'Bacia do Búzi' },
   { id: 'mocuba', district: 'Mocuba', station: 'Ponte Licungo', basin: 'Bacia do Licungo' },
@@ -82,7 +84,7 @@ onUnmounted(() => clearTimeout(feedbackTimer))
   <div id="registo" class="w-full bg-surface font-body-md text-body-md text-on-surface">
     <header class="registo-header fixed inset-x-0 top-0 z-50 bg-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.03)]">
       <div class="flex h-20 items-center justify-between gap-2 px-gutter">
-        <a href="#registo" class="flex flex-col justify-center">
+        <a :href="links.distritos" class="flex flex-col justify-center">
           <span class="flex items-center gap-space-xs">
             <span class="h-1.5 w-1.5 shrink-0 bg-primary-container" aria-hidden="true"></span>
             <span class="font-headline-sm text-headline-sm uppercase tracking-widest text-primary">Chuva Forte</span>
@@ -90,7 +92,7 @@ onUnmounted(() => clearTimeout(feedbackTimer))
           <span class="mt-0.5 font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">Monitorização hidrológica distrital</span>
         </a>
         <div class="flex items-center gap-gutter">
-          <a href="#registo-info" class="flex min-h-[44px] items-center font-label-md text-label-md uppercase tracking-wider text-on-surface-variant transition-colors hover:text-primary">Sobre</a>
+          <a :href="links.sobre" class="flex min-h-[44px] items-center font-label-md text-label-md uppercase tracking-wider text-on-surface-variant transition-colors hover:text-primary">Sobre</a>
           <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary" aria-hidden="true">
             <span class="material-symbols-outlined text-[18px] text-on-primary">person</span>
           </span>
@@ -320,18 +322,18 @@ onUnmounted(() => clearTimeout(feedbackTimer))
         <span class="shrink-0">MOZ • WGS84</span>
       </div>
       <nav class="flex h-14 items-center justify-around px-gutter" aria-label="Navegação inferior">
-        <span class="flex min-h-[44px] items-center gap-space-xs px-space-sm font-label-md text-label-md uppercase tracking-wider text-on-surface-variant">
+        <a :href="links.distritos" class="flex min-h-[44px] items-center gap-space-xs px-space-sm font-label-md text-label-md uppercase tracking-wider text-on-surface-variant">
           <span class="material-symbols-outlined text-[18px]" aria-hidden="true">map</span>
           <span>Bacias</span>
-        </span>
-        <a href="#registo" aria-current="page" class="flex min-h-[44px] items-center gap-space-xs border-b-2 border-primary px-space-sm font-semibold uppercase tracking-wider text-primary">
+        </a>
+        <a :href="links.registo" aria-current="page" class="flex min-h-[44px] items-center gap-space-xs border-b-2 border-primary px-space-sm font-semibold uppercase tracking-wider text-primary">
           <span class="material-symbols-outlined text-[18px]" aria-hidden="true">edit_note</span>
           <span>Registo</span>
         </a>
-        <span class="flex min-h-[44px] items-center gap-space-xs px-space-sm font-label-md text-label-md uppercase tracking-wider text-on-surface-variant">
+        <a :href="links.limiares" class="flex min-h-[44px] items-center gap-space-xs px-space-sm font-label-md text-label-md uppercase tracking-wider text-on-surface-variant">
           <span class="material-symbols-outlined text-[18px]" aria-hidden="true">tune</span>
           <span>Limiares</span>
-        </span>
+        </a>
       </nav>
     </footer>
   </div>

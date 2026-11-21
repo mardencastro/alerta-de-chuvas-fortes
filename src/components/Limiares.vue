@@ -1,7 +1,7 @@
 <template>
   <header class="fixed top-0 inset-x-0 z-50 bg-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.03)] pt-safe">
     <div class="h-20 px-gutter flex items-center justify-between">
-      <a class="flex flex-col justify-center select-none cursor-pointer" @click="goHome">
+      <a class="flex flex-col justify-center select-none cursor-pointer" :href="links.distritos">
         <div class="flex items-center gap-space-xs">
           <span class="w-1.5 h-1.5 bg-primary-container rounded-none"></span>
           <span class="font-headline-sm text-headline-sm text-primary uppercase tracking-widest">chuva forte</span>
@@ -9,8 +9,8 @@
         <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mt-0.5">Monitorização hidrológica distrital</span>
       </a>
       <div class="flex items-center gap-gutter">
-        <nav class="flex items-center gap-gutter hidden sm:flex">
-          <a class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant hover:text-primary transition-colors min-h-[44px] flex items-center" href="#">Sobre</a>
+        <nav class="flex items-center gap-gutter">
+          <a class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant hover:text-primary transition-colors min-h-[44px] flex items-center" :href="links.sobre">Sobre</a>
         </nav>
         <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
           <span class="material-symbols-outlined text-on-primary text-[18px]">person</span>
@@ -19,7 +19,7 @@
     </div>
   </header>
 
-  <main class="flex flex-col relative w-full px-gutter pt-20 pb-24 bg-surface min-h-screen">
+  <main class="flex flex-col relative w-full px-gutter limiares-conteudo bg-surface min-h-screen">
     <div class="flex flex-col w-full text-on-surface">
       
       <!-- Cabeçalho -->
@@ -61,7 +61,7 @@
 
           <!-- Slider -->
           <div class="relative w-full pt-space-xs pb-space-sm flex flex-col justify-center select-none">
-            <input v-model.number="baseThreshold" class="w-full h-2 bg-surface-container-high rounded-full appearance-none cursor-pointer accent-primary focus:outline-none" max="100" min="10" step="5" type="range"/>
+            <input v-model.number="baseThreshold" aria-label="Cota operacional em milímetros por 24 horas" class="w-full h-2 bg-surface-container-high rounded-full appearance-none cursor-pointer accent-primary focus:outline-none" max="100" min="10" step="5" type="range"/>
             
             <div class="w-full flex justify-between items-start mt-space-sm px-0.5 text-on-surface-variant font-label-sm text-label-sm">
               <div class="flex flex-col items-center"><span class="w-0.5 h-1.5 bg-outline-variant mb-0.5"></span><span>10</span></div>
@@ -219,13 +219,13 @@
       <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">MOZ • WGS84</span>
     </div>
     <nav class="h-14 px-gutter flex items-center justify-around">
-      <a class="flex items-center justify-center gap-space-xs min-h-[44px] px-space-sm font-label-md text-label-md uppercase tracking-wider text-on-surface-variant hover:text-primary transition-colors cursor-pointer" @click="goHome">
+      <a class="flex items-center justify-center gap-space-xs min-h-[44px] px-space-sm font-label-md text-label-md uppercase tracking-wider text-on-surface-variant hover:text-primary transition-colors cursor-pointer" :href="links.distritos">
         <span class="material-symbols-outlined text-[18px]">map</span><span>Bacias</span>
       </a>
-      <a class="flex items-center justify-center gap-space-xs min-h-[44px] px-space-sm font-label-md text-label-md uppercase tracking-wider text-on-surface-variant hover:text-primary transition-colors" href="#">
+      <a class="flex items-center justify-center gap-space-xs min-h-[44px] px-space-sm font-label-md text-label-md uppercase tracking-wider text-on-surface-variant hover:text-primary transition-colors" :href="links.registo">
         <span class="material-symbols-outlined text-[18px]">edit_note</span><span>Registo</span>
       </a>
-      <a class="flex items-center justify-center gap-space-xs min-h-[44px] px-space-sm uppercase tracking-wider transition-colors text-primary border-b-2 border-primary font-semibold" href="#">
+      <a class="flex items-center justify-center gap-space-xs min-h-[44px] px-space-sm uppercase tracking-wider transition-colors text-primary border-b-2 border-primary font-semibold" :href="links.limiares" aria-current="page">
         <span class="material-symbols-outlined text-[18px]">tune</span><span>Limiares</span>
       </a>
     </nav>
@@ -233,37 +233,32 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed, onUnmounted, ref } from 'vue'
 
-// --- ESTADO ---
-const baseThreshold = ref(50)
-const isSoilSaturated = ref(false)
+defineProps({ links: { type: Object, required: true } })
+const baseThreshold = defineModel('limiar', { type: Number, default: 50 })
+const isSoilSaturated = defineModel('soloSaturado', { type: Boolean, default: false })
 const isResetting = ref(false)
+let resetTimer
 
-// --- COMPUTED ---
-// Calcula o limiar efetivo (se o solo estiver saturado, reduz 15mm, com mínimo de 5mm)
-const effectiveThreshold = computed(() => {
-  if (isSoilSaturated.value) {
-    return Math.max(5, baseThreshold.value - 15)
-  }
-  return baseThreshold.value
-})
+const effectiveThreshold = computed(() =>
+  isSoilSaturated.value ? Math.max(5, baseThreshold.value - 15) : baseThreshold.value,
+)
 
-// --- AÇÕES ---
-const resetThresholds = () => {
+function resetThresholds() {
   baseThreshold.value = 50
   isSoilSaturated.value = false
-  
-  // Micro-interação visual igual ao JS original
   isResetting.value = true
-  setTimeout(() => {
-    isResetting.value = false
-  }, 250)
+  clearTimeout(resetTimer)
+  resetTimer = setTimeout(() => { isResetting.value = false }, 250)
 }
 
-// Função para voltar para a página inicial (para ser usado no Header/Footer)
-const emit = defineEmits(['voltar'])
-const goHome = () => {
-  emit('voltar')
-}
+onUnmounted(() => clearTimeout(resetTimer))
 </script>
+
+<style scoped>
+.limiares-conteudo {
+  padding-top: calc(5rem + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
+}
+</style>
