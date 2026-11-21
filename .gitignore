@@ -37,3 +37,8 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# Configuração local do EmailJS
+.env
+.env.*
+!.env.example

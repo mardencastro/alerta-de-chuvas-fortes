@@ -1,42 +1,14 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import Estacao from './components/Estacao.vue'
-import Inicio from './components/Inicio.vue'
-import Limiares from './components/Limiares.vue'
-import Pagina404 from './components/Pagina404.vue'
-import Registo from './components/Registo.vue'
-import Sobre from './components/Sobre.vue'
+import { ref } from 'vue'
+import { RouterView, useRouter } from 'vue-router'
 
-const base = new URL(import.meta.env.BASE_URL, window.location.origin).pathname.replace(/\/$/, '')
-const links = {
-  distritos: base + '/distritos',
-  buzi: base + '/distritos/buzi',
-  registo: base + '/registo',
-  limiares: base + '/limiares',
-  sobre: base + '/sobre',
-}
-const paginas = new Map([
-  [base || '/', 'distritos'],
-  [base + '/index.html', 'distritos'],
-  ...Object.entries(links).map(([pagina, href]) => [href, pagina]),
-])
-const normalizarCaminho = caminho => caminho.replace(/\/+$/, '') || '/'
-const caminho = ref(window.location.pathname)
-const paginaAtual = computed(() => paginas.get(normalizarCaminho(caminho.value)) ?? '404')
+const router = useRouter()
+const links = Object.fromEntries(
+  ['distritos', 'limiares', 'registo', 'sobre'].map(name => [name, router.resolve({ name }).href]),
+)
 const limiar = ref(50)
 const soloSaturado = ref(false)
-
-function atualizarCaminho() {
-  caminho.value = window.location.pathname
-}
-
-function navegar(href) {
-  if (caminho.value === href && !window.location.search && !window.location.hash) return
-
-  window.history.pushState(null, '', href)
-  atualizarCaminho()
-  window.scrollTo(0, 0)
-}
+const irPara = name => router.push({ name })
 
 function seguirLink(event) {
   if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return
@@ -45,23 +17,22 @@ function seguirLink(event) {
   if (!link || link.target || link.hasAttribute('download')) return
 
   const destino = new URL(link.href)
-  if (destino.origin !== window.location.origin || destino.search || destino.hash || !paginas.has(normalizarCaminho(destino.pathname))) return
+  if (destino.origin !== window.location.origin || destino.pathname !== window.location.pathname ||
+    !destino.hash.startsWith('#/')) return
 
   event.preventDefault()
-  navegar(destino.pathname)
+  void router.push(destino.hash.slice(1))
 }
-
-onMounted(() => window.addEventListener('popstate', atualizarCaminho))
-onUnmounted(() => window.removeEventListener('popstate', atualizarCaminho))
 </script>
 
 <template>
   <div class="min-h-screen bg-surface" @click="seguirLink">
-    <Inicio v-if="paginaAtual === 'distritos'" :links="links" />
-    <Estacao v-else-if="paginaAtual === 'buzi'" v-model:limiar="limiar" :distritos-href="links.distritos" />
-    <Limiares v-else-if="paginaAtual === 'limiares'" v-model:limiar="limiar" v-model:solo-saturado="soloSaturado" :links="links" />
-    <Registo v-else-if="paginaAtual === 'registo'" :links="links" />
-    <Sobre v-else-if="paginaAtual === 'sobre'" @navegar="pagina => navegar(links[pagina])" />
-    <Pagina404 v-else :distritos-href="links.distritos" @voltar="navegar(links.distritos)" />
+    <RouterView v-slot="{ Component, route }">
+      <component :is="Component" v-if="route.name === 'distritos' || route.name === 'registo'" :links="links" />
+      <component :is="Component" v-else-if="route.name === 'distrito'" v-model:limiar="limiar" :distritos-href="links.distritos" />
+      <component :is="Component" v-else-if="route.name === 'limiares'" v-model:limiar="limiar" v-model:solo-saturado="soloSaturado" :links="links" />
+      <component :is="Component" v-else-if="route.name === 'sobre'" @navegar="irPara" />
+      <component :is="Component" v-else :distritos-href="links.distritos" @voltar="irPara('distritos')" />
+    </RouterView>
   </div>
 </template>

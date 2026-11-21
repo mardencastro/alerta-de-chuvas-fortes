@@ -45,9 +45,9 @@
           <span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary">Secção 01 / Configuração Local</span>
           <span class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant font-mono">CAL-24H</span>
         </div>
-        <h2 class="font-headline-sm text-headline-sm text-primary mb-space-xs">Parâmetro Pessoal de Alerta (Notificação Diária)</h2>
+        <h2 class="font-headline-sm text-headline-sm text-primary mb-space-xs">Parâmetro Pessoal de Alerta</h2>
         <p class="font-body-sm text-body-sm text-on-surface-variant mb-space-md">
-          Disparo de resumo por e-mail e destaque gráfico nos distritos que atinjam ou ultrapassem este valor.
+          O limite altera a classificação no gráfico e no resumo enviado a pedido. A redução por saturação é apresentada como simulação nesta tela.
         </p>
 
         <div class="bg-surface-container-low p-space-md rounded-[14px_4px_14px_4px] flex flex-col gap-space-md">

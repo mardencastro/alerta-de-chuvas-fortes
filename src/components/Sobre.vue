@@ -2,9 +2,9 @@
 const emit = defineEmits(['navegar'])
 
 const specifications = [
-  { label: 'Modelo meteorológico', value: 'Open-Meteo Ensemble & ECMWF' },
-  { label: 'Frequência de actualização', value: 'Diária, às 06:00 CAT' },
-  { label: 'Georreferenciação', value: 'WGS84 / Sedes distritais oficiais' },
+  { label: 'Modelo meteorológico', value: 'Open-Meteo Forecast API' },
+  { label: 'Frequência de actualização', value: 'Previsão de 7 dias, consultada ao abrir um distrito' },
+  { label: 'Georreferenciação', value: 'WGS84 / Coordenadas aproximadas, por confirmar' },
 ]
 
 const thresholds = [
@@ -92,7 +92,7 @@ const destinations = [
       <div class="divide-y divide-outline-variant/60 border-t border-outline-variant/60">
         <section class="flex flex-col gap-space-md py-space-lg leading-relaxed" aria-label="Objetivo da aplicação">
           <p>
-            O Chuva Forte agrega previsões pluviométricas de alta resolução para os distritos de Moçambique com base em dados numéricos abertos do Open-Meteo e coordenadas do Instituto Nacional de Estatística (INE).
+            O Chuva Forte agrega previsões pluviométricas para distritos de Moçambique com dados do Open-Meteo e coordenadas aproximadas do projecto.
           </p>
           <p>
             A aplicação tem como único propósito assinalar a probabilidade de precipitação diária elevada, permitindo a técnicos e residentes definir limiares personalizados de atenção e alerta.
@@ -161,7 +161,7 @@ const destinations = [
       <div class="flex items-center justify-between gap-2 px-gutter py-space-xs font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant">
         <span class="flex items-center gap-space-xs text-on-surface-variant/80">
           <span class="h-1 w-1 shrink-0 bg-secondary" aria-hidden="true"></span>
-          Fonte técnica: Open-Meteo • DNGRH
+          Open-Meteo • Coordenadas aproximadas do projecto
         </span>
         <span class="shrink-0">MOZ • WGS84</span>
       </div>

@@ -1,17 +1,10 @@
 <script setup>
 import { computed, onUnmounted, ref } from 'vue'
+import { useRegistos } from '../composables/useRegistos.js'
 
 defineProps({ links: { type: Object, required: true } })
 
-const stations = [
-  { id: 'buzi', district: 'Búzi', station: 'Posto Estúrio', basin: 'Bacia do Búzi' },
-  { id: 'mocuba', district: 'Mocuba', station: 'Ponte Licungo', basin: 'Bacia do Licungo' },
-  { id: 'chokwe', district: 'Chókwè', station: 'Eclusas Macarretane', basin: 'Rio Limpopo' },
-  { id: 'marromeu', district: 'Marromeu', station: 'Baixo Zambeze', basin: 'Rio Zambeze' },
-  { id: 'xai-xai', district: 'Xai-Xai', station: 'Foz do Limpopo', basin: 'Rio Limpopo' },
-  { id: 'caia', district: 'Caia', station: 'Ponte Guebuza', basin: 'Rio Zambeze' },
-  { id: 'mutarara', district: 'Mutarara', station: 'Posto Dona Ana', basin: 'Rio Zambeze' },
-]
+const { stations, readings } = useRegistos()
 
 const stationsById = Object.fromEntries(stations.map(station => [station.id, station]))
 const presets = ['12.5', '45.0', '70.0', '95.0']
@@ -26,15 +19,6 @@ const badgeStyles = {
   Atenção: { badge: 'bg-surface-container-highest font-semibold text-on-surface', marker: 'bg-secondary' },
   Normal: { badge: 'bg-surface text-on-surface-variant', marker: '' },
 }
-
-const readings = ref([
-  { id: 1, stationId: 'buzi', date: '26 Fev', time: '06:00', mm: 92, hours: 12 },
-  { id: 2, stationId: 'mocuba', date: '26 Fev', time: '06:00', mm: 88, hours: 12 },
-  { id: 3, stationId: 'chokwe', date: '25 Fev', time: '18:00', mm: 74, hours: 24, stationName: 'Macarretane' },
-  { id: 4, stationId: 'marromeu', date: '25 Fev', time: '06:00', mm: 48, hours: 36 },
-  { id: 5, stationId: 'xai-xai', date: '24 Fev', time: '06:00', mm: 35, hours: 48 },
-  { id: 6, stationId: 'caia', date: '23 Fev', time: '06:00', mm: 18, hours: 72 },
-])
 
 const selectedStationId = ref(stations[0].id)
 const amount = ref('45.0')
@@ -128,10 +112,10 @@ onUnmounted(() => clearTimeout(feedbackTimer))
           </div>
           <div class="flex items-end justify-between gap-2">
             <div>
-              <span class="block font-label-sm text-label-sm text-on-surface-variant/80">Último registo telemétrico</span>
+              <span class="block font-label-sm text-label-sm text-on-surface-variant/80">Registo de exemplo</span>
               <span class="font-headline-sm text-headline-sm text-primary">Hoje, 06:00 CAT</span>
             </div>
-            <span class="rounded-[6px_2px_6px_2px] bg-surface/90 px-2 py-0.5 font-label-sm text-label-sm text-primary">DNGRH • ONLINE</span>
+            <span class="rounded-[6px_2px_6px_2px] bg-surface/90 px-2 py-0.5 font-label-sm text-label-sm text-primary">DEMONSTRAÇÃO</span>
           </div>
         </div>
       </div>
@@ -307,7 +291,7 @@ onUnmounted(() => clearTimeout(feedbackTimer))
       <aside class="flex items-center justify-between gap-2 pb-space-xs pt-space-md font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
         <span class="flex items-center gap-1.5">
           <span class="h-1.5 w-1.5 shrink-0 animate-pulse bg-primary" aria-hidden="true"></span>
-          Sincronização com a rede DNGRH ativa
+          Leituras de exemplo e entradas manuais
         </span>
         <span class="shrink-0 font-mono text-on-surface-variant/80">WGS84 • MOZ</span>
       </aside>
@@ -317,7 +301,7 @@ onUnmounted(() => clearTimeout(feedbackTimer))
       <div class="flex items-center justify-between gap-2 px-gutter py-space-xs font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant">
         <span class="flex items-center gap-space-xs text-on-surface-variant/80">
           <span class="h-1 w-1 shrink-0 bg-secondary" aria-hidden="true"></span>
-          Fonte técnica: Open-Meteo • DNGRH
+          Arquivo de demonstração • Entradas locais
         </span>
         <span class="shrink-0">MOZ • WGS84</span>
       </div>

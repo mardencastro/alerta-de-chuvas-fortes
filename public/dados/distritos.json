@@ -1,0 +1,184 @@
+[
+  {
+    "id": "buzi",
+    "nome": "Búzi",
+    "provincia": "Sofala",
+    "lat": -19.88,
+    "lon": 34.58
+  },
+  {
+    "id": "marromeu",
+    "nome": "Marromeu",
+    "provincia": "Sofala",
+    "lat": -18.29,
+    "lon": 35.94
+  },
+  {
+    "id": "caia",
+    "nome": "Caia",
+    "provincia": "Sofala",
+    "lat": -17.82,
+    "lon": 35.34
+  },
+  {
+    "id": "dondo",
+    "nome": "Dondo",
+    "provincia": "Sofala",
+    "lat": -19.62,
+    "lon": 34.74
+  },
+  {
+    "id": "gorongosa",
+    "nome": "Gorongosa",
+    "provincia": "Sofala",
+    "lat": -18.68,
+    "lon": 34.07
+  },
+  {
+    "id": "chokwe",
+    "nome": "Chókwè",
+    "provincia": "Gaza",
+    "lat": -24.53,
+    "lon": 32.98
+  },
+  {
+    "id": "xai-xai",
+    "nome": "Xai-Xai",
+    "provincia": "Gaza",
+    "lat": -25.05,
+    "lon": 33.65
+  },
+  {
+    "id": "chibuto",
+    "nome": "Chibuto",
+    "provincia": "Gaza",
+    "lat": -24.69,
+    "lon": 33.53
+  },
+  {
+    "id": "bilene",
+    "nome": "Bilene",
+    "provincia": "Gaza",
+    "lat": -25.03,
+    "lon": 33.1
+  },
+  {
+    "id": "mocuba",
+    "nome": "Mocuba",
+    "provincia": "Zambézia",
+    "lat": -16.84,
+    "lon": 36.99
+  },
+  {
+    "id": "chinde",
+    "nome": "Chinde",
+    "provincia": "Zambézia",
+    "lat": -18.58,
+    "lon": 36.46
+  },
+  {
+    "id": "gurue",
+    "nome": "Gurué",
+    "provincia": "Zambézia",
+    "lat": -15.47,
+    "lon": 37.68
+  },
+  {
+    "id": "milange",
+    "nome": "Milange",
+    "provincia": "Zambézia",
+    "lat": -16.1,
+    "lon": 35.8
+  },
+  {
+    "id": "morrumbala",
+    "nome": "Morrumbala",
+    "provincia": "Zambézia",
+    "lat": -17.33,
+    "lon": 35.58
+  },
+  {
+    "id": "angoche",
+    "nome": "Angoche",
+    "provincia": "Nampula",
+    "lat": -16.23,
+    "lon": 39.91
+  },
+  {
+    "id": "monapo",
+    "nome": "Monapo",
+    "provincia": "Nampula",
+    "lat": -14.92,
+    "lon": 40.39
+  },
+  {
+    "id": "memba",
+    "nome": "Memba",
+    "provincia": "Nampula",
+    "lat": -14.17,
+    "lon": 40.54
+  },
+  {
+    "id": "malema",
+    "nome": "Malema",
+    "provincia": "Nampula",
+    "lat": -14.95,
+    "lon": 37.41
+  },
+  {
+    "id": "boane",
+    "nome": "Boane",
+    "provincia": "Maputo",
+    "lat": -26.04,
+    "lon": 32.33
+  },
+  {
+    "id": "magude",
+    "nome": "Magude",
+    "provincia": "Maputo",
+    "lat": -25.02,
+    "lon": 32.65
+  },
+  {
+    "id": "marracuene",
+    "nome": "Marracuene",
+    "provincia": "Maputo",
+    "lat": -25.74,
+    "lon": 32.67
+  },
+  {
+    "id": "moamba",
+    "nome": "Moamba",
+    "provincia": "Maputo",
+    "lat": -25.6,
+    "lon": 32.24
+  },
+  {
+    "id": "namaacha",
+    "nome": "Namaacha",
+    "provincia": "Maputo",
+    "lat": -25.98,
+    "lon": 32.02
+  },
+  {
+    "id": "vilankulo",
+    "nome": "Vilankulo",
+    "provincia": "Inhambane",
+    "lat": -22,
+    "lon": 35.32
+  },
+  {
+    "id": "manhica",
+    "nome": "Manhiça",
+    "provincia": "Maputo",
+    "lat": -25.4,
+    "lon": 32.81
+  },
+  {
+    "id": "manica",
+    "nome": "Manica",
+    "provincia": "Manica",
+    "lat": -18.94,
+    "lon": 32.88
+  }
+]

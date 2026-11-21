@@ -1,160 +1,74 @@
 <script setup>
-import { computed, onUnmounted, ref } from 'vue'
+import { computed, ref } from 'vue'
+import { useAlertaEmail } from '../composables/useAlertaEmail.js'
+import { nivelMaximo } from '../utils/classificar.js'
 
-defineProps({ distritosHref: { type: String, required: true } })
-
-const forecast = [
-  {
-    weekday: 'seg',
-    date: '24',
-    day: 'Segunda-feira, 24 de Fevereiro',
-    mm: 12,
-    level: 'Normal',
-    description: 'Escoamento superficial estável. Precipitação ligeira sem impacto nos leitos secundários.',
-  },
-  {
-    weekday: 'ter',
-    date: '25',
-    day: 'Terça-feira, 25 de Fevereiro',
-    mm: 38,
-    level: 'Atenção',
-    description: 'Vigiar valas de drenagem urbana e pequenos afluentes na margem direita do Búzi.',
-    hatch: { size: 4, strokeWidth: 1.2, color: '#1b4965', opacity: 0.35 },
-  },
-  {
-    weekday: 'qua',
-    date: '26',
-    day: 'Quarta-feira, 26 de Fevereiro',
-    mm: 92,
-    level: 'Alerta',
-    probability: 85,
-    description: 'Risco elevado de transbordo pluvial e saturação acelerada do solo.',
-    hatch: { size: 5, strokeWidth: 1.5, color: '#ffffff', opacity: 0.2 },
-  },
-  {
-    weekday: 'qui',
-    date: '27',
-    day: 'Quinta-feira, 27 de Fevereiro',
-    mm: 64,
-    level: 'Alerta',
-    description: 'Precipitação contínua sobre solo saturado. Monitorar secções baixas de Guara-Guara.',
-    hatch: { size: 4, strokeWidth: 1.2, color: '#ffffff', opacity: 0.25 },
-  },
-  {
-    weekday: 'sex',
-    date: '28',
-    day: 'Sexta-feira, 28 de Fevereiro',
-    mm: 25,
-    level: 'Normal',
-    description: 'Tendência decrescente. Níveis de precipitação moderados sem agravamento hidrológico.',
-  },
-  {
-    weekday: 'sáb',
-    date: '01',
-    day: 'Sábado, 01 de Março',
-    mm: 10,
-    level: 'Normal',
-    description: 'Precipitação pontual e fraca. Capacidade de infiltração normalizada.',
-  },
-  {
-    weekday: 'dom',
-    date: '02',
-    day: 'Domingo, 02 de Março',
-    mm: 4,
-    level: 'Normal',
-    description: 'Céu pouco nublado a limpo. Fluxo hídrico do rio em estabilização progressiva.',
-  },
-]
-
+const props = defineProps({
+  distritosHref: { type: String, required: true },
+  distrito: { type: Object, required: true },
+  dias: { type: Array, required: true },
+  aCarregar: Boolean,
+  erro: String,
+})
+const emit = defineEmits(['recarregar'])
+const threshold = defineModel('limiar', { type: Number, default: 50 })
+const selectedIndex = ref(0)
+const email = ref('')
+const { estado, mensagemErro, emEnvio, enviar } = useAlertaEmail()
+const formatoDia = new Intl.DateTimeFormat('pt-MZ', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' })
+const formatoCurto = new Intl.DateTimeFormat('pt-MZ', { weekday: 'short', timeZone: 'UTC' })
 const levelStyles = {
-  Normal: {
-    badge: 'bg-surface-container text-on-surface-variant font-medium',
+  normal: {
+    label: 'Normal', badge: 'bg-surface-container text-on-surface-variant font-medium',
     marker: 'bg-on-surface-variant rounded-full',
   },
-  Atenção: {
-    badge: 'bg-surface-container-highest text-primary font-semibold',
-    marker: 'bg-primary',
+  atencao: {
+    label: 'Atenção', badge: 'bg-surface-container-highest text-primary font-semibold', marker: 'bg-primary',
   },
-  Alerta: {
-    badge: 'bg-primary text-on-primary font-semibold',
-    marker: 'bg-surface-bright',
+  alerta: {
+    label: 'Alerta', badge: 'bg-primary text-on-primary font-semibold', marker: 'bg-surface-bright',
   },
 }
 
-const diagnosticViews = [
-  { id: 'clear', label: 'Sem Excedência' },
-  { id: 'loading', label: 'A Carregar' },
-]
+const maxMm = computed(() => Math.max(100, ...props.dias.map(dia => Math.ceil((dia.mm ?? 0) / 20) * 20)))
+const thresholdPosition = computed(() => Math.min(threshold.value / maxMm.value * 100, 98) + '%')
+const selectedDay = computed(() => bars.value[selectedIndex.value] ?? bars.value[0])
+const selectedLevel = computed(() => selectedDay.value?.mm == null ? null : levelStyles[selectedDay.value.nivel])
+const temPrevisao = computed(() => props.dias.some(dia => dia.mm !== null))
+const maximo = computed(() => levelStyles[nivelMaximo(props.dias)].label)
 
-const loadingBars = ['h-8', 'h-12', 'h-14', 'h-6', 'h-10', 'h-4', 'h-3']
+const bars = computed(() => props.dias.map((dia, index) => {
+  const date = new Date(dia.data + 'T00:00:00Z')
+  const selected = index === Math.min(selectedIndex.value, props.dias.length - 1)
+  let color = 'bg-surface-container-high'
+  if (dia.nivel === 'atencao') color = 'bg-surface-container-highest'
+  if (dia.nivel === 'alerta') color = 'bg-secondary'
+  if (selected) color = 'bg-primary ring-2 ring-primary ring-offset-2 ring-offset-surface-container-lowest'
 
-const feedbackStates = {
-  invalid: {
-    label: 'E-mail inválido',
-    icon: 'error',
-    message: 'E-mail inválido. Por favor confirme o endereço.',
-    tone: 'bg-error-container text-on-error-container',
-  },
-  sending: {
-    label: 'A enviar...',
-    icon: 'sync',
-    message: 'A enviar subscrição telemétrica...',
-    tone: 'bg-surface-container text-on-surface-variant',
-  },
-  success: {
-    label: 'Subscrição confirmada',
-    icon: 'check_circle',
-    message: 'Subscrição confirmada. Receberá alertas diários caso o limiar seja atingido.',
-    tone: 'bg-secondary-container text-on-secondary-container',
-  },
-  network: {
-    label: 'Falha de ligação',
-    icon: 'cloud_off',
-    message: 'Falha de ligação ao posto de dados. Tente novamente.',
-    tone: 'bg-surface-container-highest text-on-surface-variant',
-  },
-}
+  return {
+    ...dia,
+    selected,
+    color,
+    meetsThreshold: dia.nivel === 'alerta',
+    day: formatoDia.format(date),
+    weekday: formatoCurto.format(date).replace('.', ''),
+    height: dia.mm === null ? 0 : Math.max(dia.mm / maxMm.value * 100, 2),
+    hatch: dia.mm !== null && dia.nivel !== 'normal'
+      ? { size: 4, strokeWidth: 1.2, color: dia.nivel === 'alerta' || selected ? '#ffffff' : '#1b4965', opacity: 0.25 }
+      : null,
+  }
+}))
 
-const selectedIndex = ref(2)
-const threshold = defineModel('limiar', { type: Number, default: 50 })
-const diagnostic = ref('clear')
-const feedbackState = ref(null)
-let submissionTimer
-
-const selectedDay = computed(() => forecast[selectedIndex.value])
-const selectedLevel = computed(() => levelStyles[selectedDay.value.level])
-const thresholdPosition = computed(() => Math.min(threshold.value, 98) + '%')
-const feedback = computed(() => feedbackStates[feedbackState.value])
-
-const bars = computed(() =>
-  forecast.map((day, index) => {
-    const selected = index === selectedIndex.value
-    const meetsThreshold = day.mm >= threshold.value
-    let color = day.level === 'Atenção' ? 'bg-surface-container-highest' : 'bg-surface-container-high'
-
-    if (selected) {
-      color = 'bg-primary ring-2 ring-primary ring-offset-2 ring-offset-surface-container-lowest'
-    } else if (meetsThreshold) {
-      color = 'bg-secondary'
-    }
-
-    return { ...day, selected, meetsThreshold, color }
-  }),
-)
-
-function setFeedback(state) {
-  clearTimeout(submissionTimer)
-  feedbackState.value = state
-}
+const feedback = computed(() => {
+  if (estado.value === 'a-enviar') return { icon: 'sync', tone: 'bg-surface-container text-on-surface-variant', message: 'A enviar resumo…' }
+  if (estado.value === 'enviado') return { icon: 'check_circle', tone: 'bg-secondary-container text-on-secondary-container', message: 'Resumo enviado.' }
+  if (estado.value === 'erro') return { icon: 'error', tone: 'bg-error-container text-on-error-container', message: mensagemErro.value }
+  return null
+})
 
 function submitEmail() {
-  if (feedbackState.value === 'sending') return
-
-  setFeedback('sending')
-  submissionTimer = setTimeout(() => setFeedback('success'), 900)
+  return enviar(email.value, props.distrito, props.dias, threshold.value)
 }
-
-onUnmounted(() => clearTimeout(submissionTimer))
 </script>
 
 <template>
@@ -195,54 +109,57 @@ onUnmounted(() => clearTimeout(submissionTimer))
           </a>
           <div class="inline-flex items-center gap-1.5 rounded-[4px_1px_4px_1px] bg-surface-container px-2 py-0.5 font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant">
             <span class="h-1.5 w-1.5 rounded-full bg-primary"></span>
-            <span>Rede Telemétrica</span>
+            <span>Open-Meteo</span>
           </div>
         </div>
         <div class="flex items-baseline justify-between gap-2">
-          <h2 class="font-headline-xl-mobile text-headline-xl-mobile font-semibold tracking-tight text-primary">Búzi</h2>
-          <span class="font-label-sm text-label-sm tabular-nums text-on-surface-variant">Posto: MZ-SOF-04</span>
+          <h2 class="font-headline-xl-mobile text-headline-xl-mobile font-semibold tracking-tight text-primary">{{ distrito.nome }}</h2>
+          <span class="font-label-sm text-label-sm tabular-nums text-on-surface-variant">{{ distrito.id }}</span>
         </div>
         <p class="mt-0.5 font-body-md text-body-md text-on-surface-variant">
-          Província de Sofala · Bacia do Rio Púngoè / Búzi
+          {{ distrito.provincia }}
         </p>
         <div class="mt-2 flex items-center gap-2 rounded-[6px_2px_6px_2px] bg-surface-container-low px-2.5 pb-1.5 pt-2">
           <span class="material-symbols-outlined text-[15px] text-primary" aria-hidden="true">explore</span>
           <span class="font-label-sm text-label-sm uppercase tabular-nums tracking-wider text-on-surface-variant">
-            Estação Hidrométrica 19°53'S 34°36'E · Cota 14m
+            Coordenadas aproximadas {{ distrito.lat.toFixed(2) }}°, {{ distrito.lon.toFixed(2) }}°
           </span>
         </div>
       </section>
 
       <div class="my-1 h-px w-full bg-surface-container-highest"></div>
 
-      <section class="flex flex-col px-1 py-4" aria-label="Previsão do dia selecionado" aria-live="polite" aria-atomic="true">
+      <section v-if="selectedDay && temPrevisao" class="flex flex-col px-1 py-4" aria-label="Previsão do dia selecionado" aria-live="polite" aria-atomic="true">
         <div class="flex items-center justify-between">
           <span class="font-label-md text-label-md font-medium uppercase tracking-wider text-on-surface-variant">
             {{ selectedDay.day }}
           </span>
           <span
             class="inline-flex items-center gap-1 rounded-[6px_2px_6px_2px] px-2 py-0.5 font-label-sm text-label-sm uppercase tracking-wider"
-            :class="selectedLevel.badge"
+            :class="selectedLevel?.badge ?? 'bg-surface-container text-on-surface-variant'"
           >
-            <span class="h-1.5 w-1.5" :class="selectedLevel.marker"></span>
-            <span>{{ selectedDay.level }}</span>
+            <span class="h-1.5 w-1.5" v-if="selectedLevel" :class="selectedLevel.marker"></span>
+            <span>{{ selectedLevel?.label ?? 'Dados indisponíveis' }}</span>
           </span>
         </div>
         <div class="mt-1 flex items-baseline gap-2">
           <div class="font-headline-xl text-headline-xl font-bold tabular-nums tracking-tighter text-primary">
-            {{ selectedDay.mm }}
+            {{ selectedDay.mm ?? '—' }}
           </div>
           <span class="font-headline-sm text-headline-sm font-medium lowercase text-secondary">mm / 24h</span>
         </div>
         <p class="mt-1 font-body-sm text-body-sm text-on-surface-variant">
-          <template v-if="selectedDay.probability">
-            Probabilidade de precipitação: <strong class="font-semibold text-primary">{{ selectedDay.probability }}%</strong> ·
-          </template>
-          {{ selectedDay.description }}
+          Probabilidade de precipitação:
+          <strong class="font-semibold text-primary">{{ selectedDay.probabilidade === null ? 'indisponível' : selectedDay.probabilidade + '%' }}</strong>
         </p>
       </section>
 
-      <section class="mt-2 w-full rounded-[14px_4px_14px_4px] bg-surface-container-lowest px-2 pb-3 pt-5" aria-labelledby="chart-title">
+      <div v-else class="px-1 py-4 font-body-md text-body-md text-on-surface-variant" role="status">
+        <p>{{ aCarregar ? 'A carregar a previsão…' : erro || 'Nenhuma previsão de precipitação disponível.' }}</p>
+        <button v-if="!aCarregar" type="button" class="mt-2 text-primary underline" @click="emit('recarregar')">Tentar de novo</button>
+      </div>
+
+      <section v-if="temPrevisao" class="mt-2 w-full rounded-[14px_4px_14px_4px] bg-surface-container-lowest px-2 pb-3 pt-5" aria-labelledby="chart-title">
         <div class="mb-6 flex items-center justify-between px-1">
           <div class="flex items-center gap-2">
             <span class="h-2 w-2 rounded-[2px_0_2px_0] bg-primary-container"></span>
@@ -253,11 +170,11 @@ onUnmounted(() => clearTimeout(submissionTimer))
 
         <div class="relative flex h-56 w-full flex-col justify-end pb-1 pt-4">
           <div class="absolute inset-x-0 top-0 flex items-center justify-between text-on-surface-variant/40" aria-hidden="true">
-            <span class="font-label-sm text-[9px] tabular-nums">100 mm</span>
+            <span class="font-label-sm text-[9px] tabular-nums">{{ maxMm }} mm</span>
             <div class="ml-2 h-px flex-1 bg-surface-container-high"></div>
           </div>
           <div class="absolute inset-x-0 top-1/2 flex items-center justify-between text-on-surface-variant/40" aria-hidden="true">
-            <span class="font-label-sm text-[9px] tabular-nums">50 mm</span>
+            <span class="font-label-sm text-[9px] tabular-nums">{{ maxMm / 2 }} mm</span>
             <div class="ml-2 h-px flex-1 bg-surface-container-high"></div>
           </div>
 
@@ -273,10 +190,10 @@ onUnmounted(() => clearTimeout(submissionTimer))
           <div class="relative z-10 flex h-full w-full items-end justify-between px-1 pt-6">
             <button
               v-for="(bar, index) in bars"
-              :key="bar.date"
+              :key="bar.data"
               type="button"
               class="flex h-full min-w-0 flex-1 flex-col items-center justify-end px-1 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
-              :aria-label="bar.day + ', ' + bar.mm + ' milímetros'"
+              :aria-label="bar.day + (bar.mm === null ? ', valor indisponível' : ', ' + bar.mm + ' milímetros')"
               :aria-pressed="bar.selected"
               @click="selectedIndex = index"
             >
@@ -284,12 +201,12 @@ onUnmounted(() => clearTimeout(submissionTimer))
                 class="mb-1 font-label-sm text-[10px] tabular-nums"
                 :class="bar.selected || bar.meetsThreshold ? 'font-bold text-primary' : 'text-on-surface-variant'"
               >
-                {{ bar.mm }}
+                {{ bar.mm ?? '—' }}
               </span>
               <span
                 class="relative block w-full overflow-hidden rounded-[6px_2px_0_0] transition-all"
                 :class="bar.color"
-                :style="{ height: Math.max(bar.mm, 6) + '%' }"
+                :style="{ height: bar.height + '%' }"
               >
                 <svg
                   v-if="bar.hatch"
@@ -299,7 +216,7 @@ onUnmounted(() => clearTimeout(submissionTimer))
                 >
                   <defs>
                     <pattern
-                      :id="'hatch-' + bar.date"
+                      :id="'hatch-' + bar.data"
                       :width="bar.hatch.size"
                       :height="bar.hatch.size"
                       patternUnits="userSpaceOnUse"
@@ -308,7 +225,7 @@ onUnmounted(() => clearTimeout(submissionTimer))
                       <line x1="0" y1="0" x2="0" :y2="bar.hatch.size" :stroke="bar.hatch.color" :stroke-width="bar.hatch.strokeWidth" />
                     </pattern>
                   </defs>
-                  <rect :fill="'url(#hatch-' + bar.date + ')'" width="100%" height="100%" />
+                  <rect :fill="'url(#hatch-' + bar.data + ')'" width="100%" height="100%" />
                 </svg>
               </span>
             </button>
@@ -319,12 +236,12 @@ onUnmounted(() => clearTimeout(submissionTimer))
         <div class="flex w-full items-center px-1 text-center font-label-md text-label-md" aria-hidden="true">
           <div
             v-for="bar in bars"
-            :key="bar.date"
+            :key="bar.data"
             class="flex flex-1 flex-col py-1"
             :class="bar.selected ? 'rounded-[4px_1px_4px_1px] bg-surface-container font-bold text-primary' : 'text-on-surface-variant'"
           >
             <span class="uppercase" :class="{ 'font-semibold': !bar.selected }">{{ bar.weekday }}</span>
-            <span class="text-[10px] tabular-nums" :class="{ 'opacity-75': !bar.selected }">{{ bar.date }}</span>
+            <span class="text-[10px] tabular-nums" :class="{ 'opacity-75': !bar.selected }">{{ bar.data.slice(8) }}</span>
           </div>
         </div>
       </section>
@@ -371,31 +288,29 @@ onUnmounted(() => clearTimeout(submissionTimer))
       <section class="flex flex-col px-1">
         <div class="mb-1.5 flex items-center gap-1.5">
           <span class="material-symbols-outlined text-[18px] text-primary" aria-hidden="true">outgoing_mail</span>
-          <h3 class="font-label-md text-label-md font-bold uppercase tracking-wider text-primary">Resumo Diário de Bacia</h3>
+          <h3 class="font-label-md text-label-md font-bold uppercase tracking-wider text-primary">Resumo da previsão</h3>
         </div>
         <p class="mb-3 font-body-sm text-body-sm text-on-surface-variant">
-          Enviaremos um único resumo diário às 06:00 quando a previsão exceder o limite estabelecido.
+          Envia para o teu e-mail a previsão disponível e os dias que atingem o limite pessoal.
         </p>
-        <form class="flex flex-col gap-2.5" @submit.prevent="submitEmail">
+        <form class="flex flex-col gap-2.5" novalidate @submit.prevent="submitEmail">
           <label for="email-input" class="sr-only">Endereço de e-mail</label>
           <input
             id="email-input"
+            v-model="email"
             type="email"
             autocomplete="email"
             placeholder="nome@dominio.mz"
             required
-            :aria-invalid="feedbackState === 'invalid' ? 'true' : undefined"
-            :aria-describedby="feedbackState === 'invalid' ? 'email-feedback' : undefined"
+            aria-describedby="email-feedback"
             class="h-12 w-full rounded-[8px_2px_8px_2px] bg-surface-container-lowest px-3.5 font-body-md text-body-md text-on-surface transition-all placeholder:text-on-surface-variant/40 focus:bg-surface-bright focus-visible:outline-primary"
-            @invalid.prevent="setFeedback('invalid')"
-            @input="feedbackState === 'invalid' && setFeedback(null)"
           />
           <button
             type="submit"
-            :disabled="feedbackState === 'sending'"
+            :disabled="emEnvio || !temPrevisao"
             class="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-[14px_4px_14px_4px] bg-primary px-4 font-label-md text-label-md font-semibold uppercase tracking-wider text-on-primary transition-colors active:bg-primary-container disabled:cursor-wait disabled:opacity-70"
           >
-            <span>Receber resumo</span>
+            <span>Enviar resumo</span>
             <span class="material-symbols-outlined text-[18px]" aria-hidden="true">send</span>
           </button>
         </form>
@@ -407,7 +322,7 @@ onUnmounted(() => clearTimeout(submissionTimer))
           >
             <span
               class="material-symbols-outlined shrink-0 text-[18px]"
-              :class="{ 'animate-spin': feedbackState === 'sending' }"
+              :class="{ 'animate-spin': estado === 'a-enviar' }"
               aria-hidden="true"
             >{{ feedback.icon }}</span>
             <span>{{ feedback.message }}</span>
@@ -418,70 +333,14 @@ onUnmounted(() => clearTimeout(submissionTimer))
       <div class="my-6 h-px w-full bg-surface-container-highest"></div>
 
       <section class="flex flex-col px-1" aria-labelledby="diagnostic-title">
-        <div class="mb-3 flex items-center justify-between">
-          <h3 id="diagnostic-title" class="font-label-sm text-label-sm font-bold uppercase tracking-wider text-on-surface-variant">
-            Painel de Estados do Sistema
-          </h3>
-          <span class="font-mono text-[9px] text-on-surface-variant/60">DIAG_MODE</span>
-        </div>
-        <div class="mb-3 grid grid-cols-2 gap-1.5 rounded-[8px_2px_8px_2px] bg-surface-container p-1">
-          <button
-            v-for="view in diagnosticViews"
-            :key="view.id"
-            type="button"
-            :aria-pressed="diagnostic === view.id"
-            class="rounded-[6px_2px_6px_2px] px-2 py-1.5 text-center font-label-sm text-label-sm uppercase tracking-wide transition-all"
-            :class="diagnostic === view.id ? 'bg-surface-bright font-bold text-primary' : 'text-on-surface-variant hover:text-primary'"
-            @click="diagnostic = view.id"
-          >
-            {{ view.label }}
-          </button>
-        </div>
-
-        <div class="flex flex-col gap-2 rounded-[10px_3px_10px_3px] bg-surface-container-low p-3" aria-live="polite">
-          <div v-if="diagnostic === 'clear'" class="flex items-start gap-2.5">
-            <span class="material-symbols-outlined mt-0.5 shrink-0 text-[20px] text-secondary" aria-hidden="true">water_drop</span>
-            <div class="flex flex-col">
-              <span class="font-label-md text-label-md font-semibold text-primary">Sem dias acima do limite</span>
-              <p class="mt-0.5 font-body-sm text-body-sm text-on-surface-variant">
-                Nenhum dia acima de 50 mm nos próximos 7 dias. Condições pluviais dentro dos parâmetros basais.
-              </p>
-            </div>
-          </div>
-          <template v-else>
-            <div class="mb-1 flex items-center justify-between">
-              <span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">Sincronizando Boletim...</span>
-              <span class="h-2 w-2 animate-pulse rounded-full bg-secondary" aria-hidden="true"></span>
-            </div>
-            <div class="flex h-20 w-full items-end justify-between rounded-[6px_2px_6px_2px] bg-surface-bright px-2 pb-1 pt-2" aria-hidden="true">
-              <div
-                v-for="height in loadingBars"
-                :key="height"
-                class="w-5 rounded-[3px_1px_0_0] bg-surface-container"
-                :class="height"
-              ></div>
-            </div>
-            <span class="text-center font-label-sm text-[10px] text-on-surface-variant">
-              Aguardando telemetria das 18 estações de bacia
-            </span>
-          </template>
-        </div>
-
-        <div class="mt-4 flex flex-col gap-2 pt-3">
-          <span class="font-label-sm text-label-sm font-medium uppercase tracking-wider text-on-surface-variant">
-            Simulador de Estados do Formulário:
-          </span>
-          <div class="grid grid-cols-2 gap-1.5">
-            <button
-              v-for="(state, key) in feedbackStates"
-              :key="key"
-              type="button"
-              class="rounded-[6px_2px_6px_2px] bg-surface-container px-2 py-1.5 text-left font-label-sm text-label-sm text-on-surface-variant hover:text-primary"
-              @click="setFeedback(key)"
-            >
-              {{ state.label }}
-            </button>
-          </div>
+        <h3 id="diagnostic-title" class="mb-3 font-label-sm text-label-sm font-bold uppercase tracking-wider text-on-surface-variant">
+          Estado da previsão
+        </h3>
+        <div class="flex flex-col gap-2 rounded-[10px_3px_10px_3px] bg-surface-container-low p-3">
+          <p v-if="temPrevisao" class="font-body-sm text-body-sm text-on-surface-variant">
+            Nível máximo nos dias disponíveis: {{ maximo }}.
+          </p>
+          <p class="font-body-sm text-body-sm text-on-surface-variant">Fonte: Open-Meteo. Coordenadas distritais aproximadas do projecto.</p>
         </div>
       </section>
     </div>

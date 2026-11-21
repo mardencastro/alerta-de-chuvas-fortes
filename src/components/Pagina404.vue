@@ -1,25 +1,16 @@
 <script setup>
-import { onUnmounted, ref } from 'vue'
+import { ref } from 'vue'
 
 defineProps({
   distritosHref: { type: String, required: true },
 })
 
 const emit = defineEmits(['voltar'])
-const verificando = ref(false)
-const ligacaoVerificada = ref(false)
-let temporizador
+const estadoRede = ref('')
 
 function testarLigacao() {
-  verificando.value = true
-  ligacaoVerificada.value = false
-  temporizador = setTimeout(() => {
-    verificando.value = false
-    ligacaoVerificada.value = true
-  }, 850)
+  estadoRede.value = navigator.onLine ? 'Dispositivo ligado à rede' : 'Dispositivo sem ligação à rede'
 }
-
-onUnmounted(() => clearTimeout(temporizador))
 </script>
 
 <template>
@@ -131,24 +122,23 @@ onUnmounted(() => clearTimeout(temporizador))
       <section class="mt-margin-lg flex flex-col gap-space-sm rounded-[8px_2px_8px_2px] bg-surface-container-high p-space-md" aria-labelledby="diagnostico-404">
         <div class="flex items-center gap-space-xs text-primary">
           <span class="material-symbols-outlined text-[16px] text-secondary" aria-hidden="true">wifi_tethering</span>
-          <h2 id="diagnostico-404" class="font-label-sm text-label-sm uppercase tracking-wider">Diagnóstico de rede telemétrica</h2>
+          <h2 id="diagnostico-404" class="font-label-sm text-label-sm uppercase tracking-wider">Estado da ligação do dispositivo</h2>
         </div>
         <p class="font-body-sm text-body-sm leading-relaxed text-on-surface-variant">
-          Caso tenhas perdido a ligação ao servidor hidrográfico, certifica-te de que tens conectividade móvel activa.
+          Verifica se o dispositivo está ligado à rede antes de consultar uma previsão.
         </p>
 
         <div class="flex flex-wrap items-center justify-between gap-2 pt-space-xs">
           <button
             type="button"
             class="inline-flex min-h-10 items-center gap-space-xs py-space-xs font-label-sm text-label-sm uppercase tracking-wider text-primary hover:text-primary-container disabled:opacity-60"
-            :disabled="verificando"
             @click="testarLigacao"
           >
-            <span class="material-symbols-outlined text-[16px]" :class="{ 'animate-spin': verificando }" aria-hidden="true">sync</span>
-            <span>{{ verificando ? 'A verificar sinal...' : ligacaoVerificada ? 'Ligação operacional' : 'Testar ligação' }}</span>
+            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">sync</span>
+            <span>Verificar rede</span>
           </button>
           <span class="font-label-sm text-label-sm tabular-nums text-on-surface-variant" role="status">
-            {{ ligacaoVerificada ? 'Latência: 42ms · Conectado' : '' }}
+            {{ estadoRede }}
           </span>
         </div>
       </section>
