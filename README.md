@@ -98,3 +98,6 @@ A classificação da previsão segue o [critério definido pelo grupo](src/utils
 - [ ] Testa um endereço inválido. Com o EmailJS configurado, envia um resumo para uma caixa de teste autorizada e confirma a entrega.
 - [ ] Abre `#/distrito/nao-existe` e verifica que a tela 404 é apresentada.
 
+## Uso de inteligência artificial
+
+Foram utilizadas ferramentas de inteligência artificial, incluindo o Codex, como apoio ao desenvolvimento da aplicação e à redacção da documentação, incluindo o BRD. O grupo reviu o código e o texto e assume a responsabilidade pelo conteúdo entregue.
