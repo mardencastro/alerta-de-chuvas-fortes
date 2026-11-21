@@ -1,47 +1,26 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
-</script>
-
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
+  <div class="bg-surface min-h-screen">
+    <!-- O componente que está ativo no momento -->
+    <Estacao v-if="paginaAtual === 'estacao'" @voltar="paginaAtual = 'incio'" />
+    <InCio v-if="paginaAtual === 'incio'" />
 
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
+    <!-- Menu Flutuante para teste -->
+    <div class="fixed bottom-20 right-4 z-50 flex flex-col gap-2">
+      <button @click="paginaAtual = 'estacao'" class="bg-white p-3 rounded-full shadow-lg text-primary border border-gray-200 text-sm font-bold">
+        Ver Estação Búzi
+      </button>
+      <button @click="paginaAtual = 'incio'" class="bg-white p-3 rounded-full shadow-lg text-primary border border-gray-200 text-sm font-bold">
+        Ver Início
+      </button>
     </div>
-  </header>
-
-  <main>
-    <TheWelcome />
-  </main>
+  </div>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-}
+<script setup>
+import { ref } from 'vue'
+// Importando o nome exato que você deu ao arquivo
+import Estacao from './components/Estacao.vue'
+import InCio from './components/inCio.vue'    
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-}
-</style>
+const paginaAtual = ref('incio') // Começa no Início
+</script>
